@@ -1,0 +1,64 @@
+---
+.versioning:base:
+  stage: release
+  image: registry.rachuna-net.pl/pl.rachuna-net/containers/semantic-release:1.0.0
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - |
+      echo ""
+      echo -e "\033[1;33m===>\033[0m ⚙️  Download .releaserc.js"
+      if [ ! -f "$CI_PROJECT_DIR/.releaserc" ]; then
+        VERSIONING_RELEASERC_URL="$CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/jobs/versioning/.releaserc.js"
+        curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" ${VERSIONING_RELEASERC_URL} --output $CI_PROJECT_DIR/.releaserc.js;
+      fi
+
+      echo -e "\033[1;33m===>\033[0m 🚧  Temporary create version"
+
+      export LAST_TAG=$(git describe --tags --abbrev=0)
+      if [[ -z $LAST_TAG ]];
+        then export LAST_TAG="1.0.0";
+      fi
+      if [ ! -f "${CI_PROJECT_DIR}/versioning.env" ]; then
+        cat > "${CI_PROJECT_DIR}/versioning.env" <<EOF
+      RELEASE_CANDIDATE_VERSION=${LAST_TAG}-${CI_COMMIT_SHORT_SHA}
+      RELEASE_CANDIDATE_TAG=""
+      ARTIFACTS_TYPE=snapshot
+      JIRA_ISSUES_IDS=""
+      EOF
+      fi
+  script:
+    - |
+      echo ""
+      echo -e "\033[1;33m===>\033[0m 🚀 Semantic release"
+      echo "   Using 'semantic-release' from https://github.com/semantic-release"
+
+      [ "$CI_DEBUG_TRACE" == "true" ] && debug="--debug"
+      [ "$VERSIONING_DRY_RUN" == "true" ] && dry_run="--dry-run"
+      semantic-release $debug $dry_run
+  after_script:
+    - !reference [.helper_readme.sh]
+  artifacts:
+    reports:
+      dotenv: versioning.env
+    expire_in: "1 day"
+    paths:
+      - CHANGELOG.md
+
+🕵 Set Version:
+  stage: prepare
+  variables:
+    DOCS_MD_FILE_PATH: jobs/versioning/README.md
+    VERSIONING_DRY_RUN: "true"
+    NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+  extends: ['.versioning:base']
+  rules:
+    - when: on_success
+
+
+📍 Publish Version:
+  extends: ['.versioning:base']
+  variables:
+    DOCS_MD_FILE_PATH: jobs/versioning/README.md
+    NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+  rules:
+    - when: on_success

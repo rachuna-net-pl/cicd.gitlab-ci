@@ -1,0 +1,47 @@
+---
+variables:
+  OPENTOFU_IMAGE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:0.0.1
+  DOCS_MD_FILE_PATH: pipelines/opentofu-module/README.md
+
+🕵 opentofu fmt:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - tofu fmt -recursive -check
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+✅ tflint:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - tflint
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+✅ terraform-docs:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - |
+      cp README.md README.md.bak
+      if [ -f .terraform-docs.yml ]; then
+        terraform-docs -c .terraform-docs.yml .
+      else
+        terraform-docs md . > README.md
+      fi
+      diff README.md README.md.bak
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success

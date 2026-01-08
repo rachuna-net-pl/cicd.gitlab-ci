@@ -1,0 +1,24 @@
+---
+variables:
+  CONTAINER_IMAGE_PYTHON: registry.rachuna-net.pl/pl.rachuna-net/containers/python:1.0.0
+
+🕵 YAML lint:
+  stage: validate
+  image: $CONTAINER_IMAGE_PYTHON
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - |
+      curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" $CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/jobs/yamllint/.yamllint.yml -o .yamllint.yml
+      yamllint .
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH || $CI_MERGE_REQUEST_ID
+      changes:
+        compare_to: 'refs/heads/main'
+        paths:
+          - "**/*.yml"
+          - "**/*.yaml"
+      when: on_success
+    - when: never

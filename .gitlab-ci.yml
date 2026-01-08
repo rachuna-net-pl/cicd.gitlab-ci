@@ -1,0 +1,21 @@
+---
+default:
+  tags:
+    - gitlab-rnp
+
+include:
+  - local: "configs/stages.yml"
+  - local: "configs/workflow.yml"
+
+  # helpers
+  - local: "scripts/*.yml"
+
+  # jobs
+  - local: "jobs/*/job.yml"
+
+  # process
+  - local: "pipelines/${PROJECT_TYPE}/.gitlab-ci.yml"
+    rules:
+      - if: $DISABLE_EXECUTE_PIPELINE == "true"
+        when: never
+      - if: $PROJECT_TYPE

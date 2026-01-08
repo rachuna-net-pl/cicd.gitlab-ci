@@ -1,0 +1,78 @@
+---
+variables:
+  OPENTOFU_IMAGE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:0.0.1
+  DOCS_MD_FILE_PATH: pipelines/opentofu/README.md
+
+include:
+  - local: "pipelines/opentofu/tofu-init.sh.yml"
+
+🕵 opentofu fmt:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - tofu fmt -recursive -check
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+✅ opentofu validate:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.tofu-init.sh.yml]
+  script:
+    - tofu validate
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+✅ tflint:
+  image: $OPENTOFU_IMAGE
+  stage: validate
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.tofu-init.sh.yml]
+  script:
+    - tflint
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+🧪 opentofu plan:
+  image: $OPENTOFU_IMAGE
+  stage: unit-test
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.tofu-init.sh.yml]
+  script:
+    - tofu plan
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+💥 opentofu apply:
+  image: $OPENTOFU_IMAGE
+  stage: deploy
+  needs:
+    - job: 📍 Publish Version
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.tofu-init.sh.yml]
+  script:
+    - tofu apply -auto-approve
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: manual

@@ -1,0 +1,13 @@
+---
+.helper_readme.sh:
+  - |
+    if [[ -z "$DOCS_MD_FILE_PATH" ]]; then
+      echo -e "\n\e[1;48;5;52m 🫵 Komunikat dla DevOps! Nie ustawiono wartości dla zmiennej `DOCS_MD_FILE_PATH` \n\e[0m"
+    fi
+    CONFIG="${CI_CONFIG_PATH#*@}"
+    export GITLAB_CI_REPOSITORY_FILEPATH="${CI_CONFIG_PATH%%@*}"
+    export GITLAB_CI_REPOSITORY_PATH="${CONFIG%%:*}"
+    export GITLAB_CI_REPOSITORY_BRANCH="${CONFIG#*:}"
+
+    echo -e "\n\e[1;48;5;52m 🫵 Jeśli masz problem, najpierw zapoznaj się z dokumentacją \n\e[0m"
+    echo -e "\n\e[1;48;5;52m    Dokumentacja: $CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/blob/$GITLAB_CI_REPOSITORY_BRANCH/$DOCS_MD_FILE_PATH \n\e[0m"

@@ -1,0 +1,44 @@
+---
+🔍 Analyze Conventional Commits:
+  stage: prepare
+  image: registry.rachuna-net.pl/pl.rachuna-net/containers/python:1.0.0
+  variables:
+    CONVENTIONAL_COMMITS_REGEXP: ^(build|chore|ci|docs|feat|fix|perf|refactor|style|test|revert|merge|release|hotfix|fixup|squash|wip|BREAKING CHANGE)(\([a-zA-Z0-9_-]+\))?!?:\s.+$
+    DOCS_MD_FILE_PATH: jobs/analyze_conventional_commits/README.md
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - |
+      echo -e "\033[1;33m===>\033[0m 🔍 Analyze Conventional Commits"
+      IS_ERR="false"
+
+      if [[ $CI_DEFAULT_BRANCH == $CI_COMMIT_BRANCH ]]; then
+        exit 0
+      fi
+
+      git fetch origin $CI_DEFAULT_BRANCH
+      COMMITS=$(git --no-pager log origin/$CI_DEFAULT_BRANCH..HEAD --pretty=format:"%s")
+
+      if [[ $COMMITS == "" ]]; then
+        exit 0
+      fi
+
+      echo -e "\033[1;33m===>\033[0m 📃 Wyniki Analizy"
+      while IFS= read -r msg; do
+        echo "$msg" | grep -Eq "^(Merge|Revert|Initial\scommit)" && continue
+        if ! echo "$msg" | grep -Eq "$CONVENTIONAL_COMMITS_REGEXP"; then
+          echo "❌ Niezgodność z Conventional Commits: \"$msg\""
+          IS_ERR="true"
+        else
+          echo "✔️ Zgodność z Conventional Commits: \"$msg\""
+        fi
+
+      done <<< "$COMMITS"
+
+      if [[ $IS_ERR == "true" ]]; then
+          exit 1
+      fi
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success

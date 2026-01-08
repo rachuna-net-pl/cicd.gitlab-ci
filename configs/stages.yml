@@ -1,0 +1,15 @@
+---
+stages:
+    ### Standard w ramach dyscypliny
+    - prepare           # przygotowanie środowiska, instalacja zależności, inicjalizacja.
+    - dependency        # pobieranie zależności (biliotek, funkcji, komponentów)
+    - validate          # weryfikacja poprawności konfiguracji, linting, planowanie zmian (Terraform, Ansible), pre-commit checks.
+    - unit-test         # testy jednostkowe dla kodu (Go, .NET, Node.js itp.).
+    - sast              # analiza statyczna kodu (Static Application Security Testing).
+    - dast              # analiza dynamiczna aplikacji (Dynamic Application Security Testing).
+    - build             # budowanie artefaktów (Packer, kontenery, kod źródłowy).
+    - publish           # publikacja artefaktów, obrazów kontenerowych, paczek NuGet, npm itp.
+    - release           # Wydawanie wersji
+    - deploy            # wdrażanie aplikacji, infrastruktury, konfiguracji.
+    - integration-test  # testy integracyjne, e2e, testy akceptacyjne.
+    - cleanup           # usuwanie tymczasowych zasobów, sprzątanie środowiska.

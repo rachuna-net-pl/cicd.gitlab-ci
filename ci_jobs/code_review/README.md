@@ -28,9 +28,9 @@ Job korzysta z trzech include’ów, które dostarczają treści i konfigurację
 
 ```yaml
 include:
-  - local: "jobs/code_review/.codex/manifests/001-manifest.sh.yml"
-  - local: "jobs/code_review/.codex/profiles/001-reviewer.sh.yml"
-  - local: "jobs/code_review/.codex/prompts/001-code-review.sh.yml"
+  - local: "ci_jobs/code_review/.codex/manifests/001-manifest.sh.yml"
+  - local: "ci_jobs/code_review/.codex/profiles/001-reviewer.sh.yml"
+  - local: "ci_jobs/code_review/.codex/prompts/001-code-review.sh.yml"
 ```
 
 ### Co zapewniają include’y

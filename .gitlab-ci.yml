@@ -3,18 +3,23 @@ default:
   tags:
     - gitlab-rnp
 
+variables:
+  IMAGE_BUILDAH: registry.gitlab.com/pl.rachuna-net/artifacts/containers/buildah:1.0.0
+  IMAGE_OPENTOFU: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:1.0.0
+
 include:
-  - local: "configs/stages.yml"
-  - local: "configs/workflow.yml"
+  - local: "configs/ci_stages.yml"
+  - local: "configs/ci_workflow.yml"
+  - local: "configs/ci_variables.yml"
 
   # helpers
   - local: "scripts/*.yml"
 
   # jobs
-  - local: "jobs/*/job.yml"
+  - local: "ci_jobs/*/job.yml"
 
   # process
-  - local: "pipelines/${PROJECT_TYPE}/.gitlab-ci.yml"
+  - local: "ci_pipelines/${PROJECT_TYPE}/.gitlab-ci.yml"
     rules:
       - if: $DISABLE_EXECUTE_PIPELINE == "true"
         when: never

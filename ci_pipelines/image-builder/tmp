@@ -1,0 +1,39 @@
+# ---
+# # -----------------------------------------------------------------------------
+# # GitLab CI configuration for containers image builder.
+# # -----------------------------------------------------------------------------
+# include:
+#   - local: _common.yml
+#   - component: $CI_SERVER_FQDN/pl.rachuna-net/cicd/components/validate/contrest@v1.0.0
+#     inputs:
+#       source_files: "config.yml"
+#       namespace_policy: image_builder
+#   - component: $CI_SERVER_FQDN/pl.rachuna-net/cicd/components/ast/trivy@v1.0.0
+# ### validate
+# 🔬 Validate files (conftest):
+#   needs:
+#     - job: 🔍 Input Parameters
+#     - job: 🔍 Analyze Conventional Commits
+#     - job: 🕵 Set Version
+
+
+🔬 trivy (dast):
+  image: $TRIVY_IMAGE
+  stage: integration-test
+  services:
+    - name: $TRIVY_IMAGE
+      alias: trivy-dind
+  allow_failure: true
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache/"
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - trivy image --exit-code 0 --severity HIGH $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+    - trivy image --exit-code 1 --severity CRITICAL $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+  after_script:
+    - !reference [.helper_readme.sh]
+  cache:
+    paths:
+      - .trivycache/

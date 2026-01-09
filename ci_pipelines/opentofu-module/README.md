@@ -1,4 +1,4 @@
-## OpenTofu Module pipeline
+# OpenTofu Module
 
 Ten pipeline jest przeznaczony dla **repozytoriów z modułami OpenTofu/Terraform**, czyli takich, które nie wykonują wdrożeń infrastruktury (`apply`), a jedynie dostarczają wielokrotnego użytku kod IaC. Celem jest utrzymanie:
 

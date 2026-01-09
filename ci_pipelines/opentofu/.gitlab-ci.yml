@@ -1,13 +1,12 @@
 ---
 variables:
-  OPENTOFU_IMAGE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:0.0.1
   DOCS_MD_FILE_PATH: pipelines/opentofu/README.md
 
 include:
   - local: "pipelines/opentofu/tofu-init.sh.yml"
 
 🕵 opentofu fmt:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -19,7 +18,7 @@ include:
     - when: on_success
 
 ✅ opentofu validate:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -32,7 +31,7 @@ include:
     - when: on_success
 
 ✅ tflint:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -45,7 +44,7 @@ include:
     - when: on_success
 
 🧪 opentofu plan:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: unit-test
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -58,7 +57,7 @@ include:
     - when: on_success
 
 💥 opentofu apply:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: deploy
   needs:
     - job: 📍 Publish Version

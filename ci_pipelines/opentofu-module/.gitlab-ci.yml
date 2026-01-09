@@ -1,10 +1,9 @@
 ---
 variables:
-  OPENTOFU_IMAGE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:0.0.1
   DOCS_MD_FILE_PATH: pipelines/opentofu-module/README.md
 
 🕵 opentofu fmt:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -16,7 +15,7 @@ variables:
     - when: on_success
 
 ✅ tflint:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]
@@ -28,7 +27,7 @@ variables:
     - when: on_success
 
 ✅ terraform-docs:
-  image: $OPENTOFU_IMAGE
+  image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
     - !reference [.helper_gitlab-ci.sh]

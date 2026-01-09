@@ -1,10 +1,10 @@
 ---
 🔍 Analyze Conventional Commits:
   stage: prepare
-  image: registry.rachuna-net.pl/pl.rachuna-net/containers/python:1.0.0
+  image: $IMAGE_PYTHON
   variables:
     CONVENTIONAL_COMMITS_REGEXP: ^(build|chore|ci|docs|feat|fix|perf|refactor|style|test|revert|merge|release|hotfix|fixup|squash|wip|BREAKING CHANGE)(\([a-zA-Z0-9_-]+\))?!?:\s.+$
-    DOCS_MD_FILE_PATH: jobs/analyze_conventional_commits/README.md
+    DOCS_MD_FILE_PATH: ci_jobs/analyze_conventional_commits/README.md
   before_script:
     - !reference [.helper_gitlab-ci.sh]
   script:

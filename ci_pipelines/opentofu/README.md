@@ -1,4 +1,4 @@
-## OpenTofu pipeline
+# OpenTofu pipeline
 
 Ten pipeline realizuje standardowy przepływ IaC dla OpenTofu (Terraform-compatible) w GitLab CI:
 

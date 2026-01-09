@@ -1,0 +1,83 @@
+---
+variables:
+  TRIVY_IMAGE: registry.rachuna-net.pl/pl.rachuna-net/containers/trivy:1.0.0
+  DOCKER_HOST: tcp://localhost:2375
+  BUILDAH_CONFIG_FILE_PATH: config.yml
+  STORAGE_DRIVER: vfs
+  BUILDAH_FORMAT: docker
+  BUILDAH_ISOLATION: chroot
+  BUILDAH_STORAGE_ROOT: /tmp/buildah-root
+  BUILDAH_STORAGE_RUNROOT: /tmp/buildah-runroot
+  BUILDAH_UNSHARE: 0
+  DOCKER_TEST_SCRIPT_PATH: "container_test.sh"
+  DOCS_MD_FILE_PATH: pipelines/image-builder/README.md
+
+include:
+  - local: "pipelines/image-builder/image-builder.sh.yml"
+
+
+🚀 build container image:
+  stage: build
+  image: $IMAGE_BUILDAH
+  needs:
+    - job: 🕵 YAML lint
+      optional: true
+    # - job: 🔬 Validate files (conftest)
+    - job: 🕵 Set Version
+      artifacts: true
+  services:
+    - name: $IMAGE_BUILDAH
+      alias: buildah-dind
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - FULL_IMAGE_NAME=$CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+  script:
+    - !reference [.image-builder.sh]
+  after_script:
+    - !reference [.helper_readme.sh]
+  artifacts:
+    paths:
+      - container-image.tar
+    expire_in: "1 day"
+  rules:
+    - when: on_success
+
+🌐 publish container image:
+  stage: publish
+  image: $IMAGE_BUILDAH
+  needs:
+    - job: 🚀 build container image
+      artifacts: true
+    - job: 🕵 Set Version
+      artifacts: true
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - FULL_IMAGE_NAME=$CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+  script:
+    - |
+      buildah pull "docker-archive:container-image.tar"
+
+      IMAGE_ID=$(buildah images -q | head -n1)
+
+      buildah tag "$IMAGE_ID" "$FULL_IMAGE_NAME"
+      buildah login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+      buildah push "$FULL_IMAGE_NAME" "docker://$FULL_IMAGE_NAME"
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+🧪 test docker image:
+  image: $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+  stage: "integration-test"
+  needs:
+    - job: 🌐 publish container image
+      artifacts: true
+    - job: 🕵 Set Version
+      artifacts: true
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  after_script:
+    - !reference [.helper_readme.sh]
+  script:
+    - bash $DOCKER_TEST_SCRIPT_PATH

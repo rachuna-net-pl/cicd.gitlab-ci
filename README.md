@@ -3,10 +3,10 @@
 Procesy do ciągłej integracji i dostarczania (CI/CD) dla projektów w grupie pl.rachuna-net
 
 ## Dokumentacja jobów
-* [Wersjonowanie kodu aplikacji](jobs/versioning/README.md)
-* [Analyze Conventional Commits](jobs/analyze_conventional_commits/README.md)
-* [Code Review](jobs/code_review/README.md)
-* [Yaml lint](jobs/yamllint/README.md)
+* [Wersjonowanie kodu aplikacji](ci_jobs/versioning/README.md)
+* [Analyze Conventional Commits](ci_jobs/analyze_conventional_commits/README.md)
+* [Code Review](ci_jobs/code_review/README.md)
+* [Yaml lint](ci_jobs/yamllint/README.md)
 
 ---
 ## Dokumentacja pipeline

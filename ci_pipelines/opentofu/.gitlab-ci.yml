@@ -3,7 +3,7 @@ variables:
   DOCS_MD_FILE_PATH: pipelines/opentofu/README.md
 
 include:
-  - local: "pipelines/opentofu/tofu-init.sh.yml"
+  - local: "ci_pipelines/opentofu/tofu-init.sh.yml"
 
 🕵 opentofu fmt:
   image: $IMAGE_OPENTOFU

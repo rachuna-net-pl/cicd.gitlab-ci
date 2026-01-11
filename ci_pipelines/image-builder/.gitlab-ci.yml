@@ -1,6 +1,5 @@
 ---
 variables:
-  TRIVY_IMAGE: registry.rachuna-net.pl/pl.rachuna-net/containers/trivy:1.0.0
   DOCKER_HOST: tcp://localhost:2375
   BUILDAH_CONFIG_FILE_PATH: config.yml
   STORAGE_DRIVER: vfs
@@ -13,8 +12,7 @@ variables:
   DOCS_MD_FILE_PATH: pipelines/image-builder/README.md
 
 include:
-  - local: "pipelines/image-builder/image-builder.sh.yml"
-
+  - local: "ci_pipelines/image-builder/image-builder.sh.yml"
 
 🚀 build container image:
   stage: build
@@ -81,3 +79,54 @@ include:
     - !reference [.helper_readme.sh]
   script:
     - bash $DOCKER_TEST_SCRIPT_PATH
+
+🔬 trivy (dast):
+  image: $IMAGE_TRIVY
+  stage: integration-test
+  services:
+    - name: $IMAGE_TRIVY
+      alias: trivy-dind
+  allow_failure: true
+  variables:
+    TRIVY_NO_PROGRESS: "true"
+    TRIVY_CACHE_DIR: ".trivycache/"
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - |
+      export IMAGE_TO_SCAN="$CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION"
+
+      # 1) Skan + surowy JSON
+      trivy image --exit-code 0 --format json -o trivy-report.json "$IMAGE_TO_SCAN"
+
+      # 2) HTML (czytelne do ręcznej analizy)
+      trivy image --exit-code 0 --format template --template "@/opt/trivy/templates/html.tpl" -o trivy-report.html "$IMAGE_TO_SCAN"
+
+      # 3) SARIF (pod zewn. analizatory / archiwizację)
+      trivy image --exit-code 0 --format sarif -o trivy-report.sarif "$IMAGE_TO_SCAN"
+
+      # 4) SBOM CycloneDX (przydatne do compliance i późniejszych analiz)
+      trivy image --exit-code 0 --format cyclonedx -o trivy-sbom.cdx.json "$IMAGE_TO_SCAN"
+
+      # 5) JUnit (żeby GitLab CE pokazał wynik jako "Test Report")
+      trivy image --exit-code 0 --severity HIGH,CRITICAL --format template --template "@/opt/trivy/templates/junit.tpl" -o trivy-junit.xml "$IMAGE_TO_SCAN"
+
+      # 6) Gate: fail pipeline jeśli są HIGH/CRITICAL (lub wg Twojej zmiennej)
+      trivy image --exit-code 0 --severity HIGH $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+      trivy image --exit-code 1 --severity CRITICAL $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
+
+      ls -la
+  after_script:
+    - !reference [.helper_readme.sh]
+  cache:
+    paths:
+      - .trivycache/
+  artifacts:
+    reports:
+      junit: trivy-junit.xml
+    paths:
+      - trivy-report.json
+      - trivy-report.html
+      - trivy-report.sarif
+      - trivy-sbom.cdx.json
+      - trivy-junit.xml

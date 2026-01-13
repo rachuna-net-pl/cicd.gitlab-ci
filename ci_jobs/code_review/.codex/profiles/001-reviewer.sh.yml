@@ -2,7 +2,7 @@
 .001-reviewer.sh:
   - |
     mkdir -p .codex/profiles
-    cat > .codex/profiles/001-reviewer.md <<EOF
+    cat > .codex/profiles/001-reviewer.md <<'EOF'
     ==================================================
     PROFIL: REVIEWER
     Plik: .codex/profiles/reviewer.md

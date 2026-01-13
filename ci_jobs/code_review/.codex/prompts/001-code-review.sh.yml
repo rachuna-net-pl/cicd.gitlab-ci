@@ -2,7 +2,7 @@
 .001-code-review.sh:
   - |
     mkdir -p .codex/prompts
-    cat > .codex/prompts/001-code-review.md <<EOF
+    cat > .codex/prompts/001-code-review.md <<'EOF'
     ==================================================
     PROMPT 001 — CODE REVIEW (GITLAB CI)
     Plik: .codex/prompts/001-code-review.md
@@ -69,7 +69,7 @@
 
     Autoryzacja:
     Header:
-    PRIVATE-TOKEN: ${GITLAB_TOKEN}
+    PRIVATE-TOKEN: $GITLAB_TOKEN
 
     ==================================================
     ZAKRES ANALIZY

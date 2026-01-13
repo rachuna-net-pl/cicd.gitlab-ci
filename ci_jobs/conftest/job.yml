@@ -3,9 +3,9 @@
   stage: validate
   image: $IMAGE_CONFTEST
   variables:
-    REPOSITORY_PLATFORM_POLICIES_BRANCH: feat/init
+    REPOSITORY_PLATFORM_POLICIES_BRANCH: main
     PLATFORM_POLICIES_PATH: conftest/policies
-    DOCS_MD_FILE_PATH: ci_jobs/confest/README.md
+    DOCS_MD_FILE_PATH: ci_jobs/conftest/README.md
   before_script:
     - !reference [.helper_gitlab-ci.sh]
     - |

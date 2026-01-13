@@ -2,7 +2,7 @@
 .001-manifest.sh:
   - |
     mkdir -p .codex/manifests
-    cat > .codex/manifests/001-manifest.md <<EOF
+    cat > .codex/manifests/001-manifest.md <<'EOF'
     ==================================================
     TRYB ANALIZY: DIFF + KONTEKST GAŁĘZI ŹRÓDŁOWEJ
     ==================================================

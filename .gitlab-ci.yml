@@ -3,10 +3,6 @@ default:
   tags:
     - gitlab-rnp
 
-variables:
-  IMAGE_BUILDAH: registry.gitlab.com/pl.rachuna-net/artifacts/containers/buildah:1.0.0
-  IMAGE_OPENTOFU: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:1.0.0
-
 include:
   - local: "configs/ci_stages.yml"
   - local: "configs/ci_workflow.yml"

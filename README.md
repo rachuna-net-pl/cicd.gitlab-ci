@@ -6,6 +6,7 @@ Procesy do ciągłej integracji i dostarczania (CI/CD) dla projektów w grupie p
 * [Wersjonowanie kodu aplikacji](ci_jobs/versioning/README.md)
 * [Analyze Conventional Commits](ci_jobs/analyze_conventional_commits/README.md)
 * [Code Review](ci_jobs/code_review/README.md)
+* [Conftest](ci_jobs/conftest/README.md)
 * [Yaml lint](ci_jobs/yamllint/README.md)
 
 ---

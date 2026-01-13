@@ -1,0 +1,39 @@
+---
+🔬 Validate files (conftest):
+  stage: validate
+  image: $IMAGE_CONFTEST
+  variables:
+    REPOSITORY_PLATFORM_POLICIES_BRANCH: feat/init
+    PLATFORM_POLICIES_PATH: conftest/policies
+    DOCS_MD_FILE_PATH: ci_jobs/confest/README.md
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - |
+      echo -e "\033[1;33m===>\033[0m ⚙️  Download policies"
+      git clone -b $REPOSITORY_PLATFORM_POLICIES_BRANCH --single-branch $REPOSITORY_PLATFORM_POLICIES .policies
+  script:
+    - |
+      if [ ! -f .policies/$PLATFORM_POLICIES_PATH/$PLATFORM_POLICIES_NAMESPACE ]; then
+        conftest test $PLATFORM_POLICIES_FILES \
+          --policy .policies/$PLATFORM_POLICIES_PATH \
+          --namespace $PLATFORM_POLICIES_NAMESPACE \
+          -o table || EXIT_CODE=$?
+
+        conftest test $PLATFORM_POLICIES_FILES \
+          --policy .policies/$PLATFORM_POLICIES_PATH \
+          --namespace $PLATFORM_POLICIES_NAMESPACE \
+          -o junit > conftest-junit.xml || EXIT_CODE=$?
+
+        if [[ $EXIT_CODE -ne 0 ]]; then
+          exit 1;
+        fi
+      else
+        echo "Nie ma nic do roboty"
+      fi
+  after_script:
+    - !reference [.helper_readme.sh]
+  artifacts:
+    reports:
+      junit: conftest-junit.xml
+  rules:
+    - when: never

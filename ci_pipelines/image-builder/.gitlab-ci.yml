@@ -14,13 +14,20 @@ variables:
 include:
   - local: "ci_pipelines/image-builder/image-builder.sh.yml"
 
+🔬 Validate files (conftest):
+  variables:
+    PLATFORM_POLICIES_NAMESPACE: image_builder
+    PLATFORM_POLICIES_FILES: config.yml
+  rules:
+    - when: on_success
+
 🚀 build container image:
   stage: build
   image: $IMAGE_BUILDAH
   needs:
     - job: 🕵 YAML lint
       optional: true
-    # - job: 🔬 Validate files (conftest)
+    - job: 🔬 Validate files (conftest)
     - job: 🕵 Set Version
       artifacts: true
   services:
@@ -114,8 +121,6 @@ include:
       # 6) Gate: fail pipeline jeśli są HIGH/CRITICAL (lub wg Twojej zmiennej)
       trivy image --exit-code 0 --severity HIGH $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
       trivy image --exit-code 1 --severity CRITICAL $CI_REGISTRY_IMAGE:$RELEASE_CANDIDATE_VERSION
-
-      ls -la
   after_script:
     - !reference [.helper_readme.sh]
   cache:

@@ -29,7 +29,7 @@ Pipeline działa wyłącznie w trybie walidacyjnym (stage: `validate`).
 
 | Zmienna          | Domyślna wartość                                                   | Opis                                                      |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
-| `OPENTOFU_IMAGE` | `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.0.0` | Obraz narzędziowy z OpenTofu i narzędziami walidacyjnymi. |
+| `OPENTOFU_IMAGE` | `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.1.1` | Obraz narzędziowy z OpenTofu i narzędziami walidacyjnymi. |
 
 ---
 

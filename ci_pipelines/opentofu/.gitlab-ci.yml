@@ -1,6 +1,6 @@
 ---
 variables:
-  DOCS_MD_FILE_PATH: pipelines/opentofu/README.md
+  DOCS_MD_FILE_PATH: ci_pipelines/opentofu/README.md
 
 include:
   - local: "ci_pipelines/opentofu/tofu-init.sh.yml"

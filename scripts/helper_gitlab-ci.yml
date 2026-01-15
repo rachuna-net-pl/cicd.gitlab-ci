@@ -38,3 +38,8 @@
 
     # directory for pipeline files
     mkdir -p .ci
+
+    # gitlab
+    git config --global user.email "tech.mrachuna@gmail.com"
+    git config --global user.name "Technical Account"
+    git remote set-url origin "git@gitlab.com:${CI_PROJECT_PATH}.git"

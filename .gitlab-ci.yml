@@ -20,3 +20,10 @@ include:
       - if: $DISABLE_EXECUTE_PIPELINE == "true"
         when: never
       - if: $PROJECT_TYPE
+
+  # tech process
+  - local: "tech_pipelines/${TECH_PIPELINE_NAME}/.gitlab-ci.yml"
+    rules:
+      - if: $DISABLE_EXECUTE_PIPELINE == "true"
+        when: never
+      - if: $TECH_PIPELINE_NAME

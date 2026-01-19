@@ -1,4 +1,10 @@
 ---
+spec:
+  inputs:
+    TECH_PIPELINE_NAME:
+      default: ''
+
+---
 default:
   tags:
     - gitlab-rnp

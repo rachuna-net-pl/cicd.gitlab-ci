@@ -15,6 +15,7 @@ include:
   - local: "ci_pipelines/image-builder/image-builder.sh.yml"
 
 🔬 Validate files (conftest):
+  extends: [".conftest:base"]
   variables:
     PLATFORM_POLICIES_NAMESPACE: image_builder
     PLATFORM_POLICIES_FILES: config.yml

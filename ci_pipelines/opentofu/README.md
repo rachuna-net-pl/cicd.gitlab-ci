@@ -16,7 +16,7 @@ Pipeline wykorzystuje **GitLab Terraform State** jako backend dla OpenTofu.
 * Repozytorium zawiera kod OpenTofu (np. `*.tf`).
 * Dostęp do obrazu:
 
-  * `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.0.0`
+  * `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.1.1`
 * Repozytorium ma dostęp do API GitLab (standardowo zapewnia `CI_JOB_TOKEN`).
 * Zdefiniowane etapy w `.gitlab-ci.yml` obejmują co najmniej:
 
@@ -32,7 +32,7 @@ Pipeline wykorzystuje **GitLab Terraform State** jako backend dla OpenTofu.
 
 | Zmienna          | Domyślna wartość                                                   | Opis                                                              |
 | ---------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `OPENTOFU_IMAGE` | `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.0.0` | Obraz kontenera z OpenTofu oraz narzędziami (`tflint`).           |
+| `OPENTOFU_IMAGE` | `registry.rachuna-net.pl/pl.rachuna-net/containers/opentofu:1.1.1` | Obraz kontenera z OpenTofu oraz narzędziami (`tflint`).           |
 | `TF_STATE_NAME`  | `production` (fallback)                                            | Nazwa stanu w GitLab Terraform State; używana w adresie backendu. |
 
 **Uwaga:** `TF_STATE_NAME` nie jest wymagane — jeśli nie ustawisz, pipeline użyje `production`.

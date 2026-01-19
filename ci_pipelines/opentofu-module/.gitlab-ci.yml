@@ -1,6 +1,6 @@
 ---
 variables:
-  DOCS_MD_FILE_PATH: pipelines/opentofu-module/README.md
+  DOCS_MD_FILE_PATH: ci_pipelines/opentofu-module/README.md
 
 🕵 opentofu fmt:
   image: $IMAGE_OPENTOFU
@@ -40,6 +40,20 @@ variables:
         terraform-docs md . > README.md
       fi
       diff README.md README.md.bak
+      EXIT_CODE=$?
+
+      if [[ $EXIT_CODE -eq 1 ]]; then
+        git add README.md
+        git commit -m "docs: update README.md"
+        git push origin HEAD:$CI_COMMIT_REF_NAME
+
+      elif [[ $EXIT_CODE -eq 0 ]]; then
+        echo "Brak zmian"
+
+      else
+        echo "Błąd diff (exit code: $EXIT_CODE)"
+        exit $EXIT_CODE
+      fi
   after_script:
     - !reference [.helper_readme.sh]
   rules:

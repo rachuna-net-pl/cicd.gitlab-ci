@@ -9,12 +9,13 @@ variables:
   BUILDAH_STORAGE_RUNROOT: /tmp/buildah-runroot
   BUILDAH_UNSHARE: 0
   DOCKER_TEST_SCRIPT_PATH: "container_test.sh"
-  DOCS_MD_FILE_PATH: pipelines/image-builder/README.md
+  DOCS_MD_FILE_PATH: ci_pipelines/image-builder/README.md
 
 include:
   - local: "ci_pipelines/image-builder/image-builder.sh.yml"
 
 🔬 Validate files (conftest):
+  extends: [".conftest:base"]
   variables:
     PLATFORM_POLICIES_NAMESPACE: image_builder
     PLATFORM_POLICIES_FILES: config.yml

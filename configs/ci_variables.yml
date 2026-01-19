@@ -5,8 +5,12 @@ variables:
   IMAGE_CONFTEST: registry.gitlab.com/pl.rachuna-net/artifacts/containers/conftest:1.0.0
   IMAGE_OPENTOFU: registry.gitlab.com/pl.rachuna-net/artifacts/containers/opentofu:1.0.0
   IMAGE_PYTHON: registry.gitlab.com/pl.rachuna-net/artifacts/containers/python:1.0.0
+  IMAGE_RENOVATE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/renovate:1.0.0
   IMAGE_SEMANTIC_RELASE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/semantic-release:1.0.0
   IMAGE_TRIVY: registry.gitlab.com/pl.rachuna-net/artifacts/containers/trivy:1.0.0
 
   REPOSITORY_PLATFORM_POLICIES: git@gitlab.com:pl.rachuna-net/platform-policies.git
   REPOSITORY_PLATFORM_POLICIES_BRANCH: main
+
+  DISABLE_EXECUTE_PIPELINE: "false"
+  TECH_PIPELINE_NAME: $[[ inputs.TECH_PIPELINE_NAME ]]

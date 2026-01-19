@@ -1,0 +1,22 @@
+---
+variables:
+  DOCS_MD_FILE_PATH: tech_pipelines/renovate/README.md
+  RENOVATE_PLATFORM: "gitlab"
+  RENOVATE_ENDPOINT: $CI_API_V4_URL
+  RENOVATE_TOKEN: $GITLAB_TOKEN
+  RENOVATE_AUTODISCOVER: "true"
+  RENOVATE_AUTODISCOVER_NAMESPACES: "pl.rachuna-net"
+  RENOVATE_CONFIG_FILE: "renovate/config.js"
+  RENOVATE_GIT_AUTHOR: "AI Developer <tech.mrachuna@gmail.com>"
+  LOG_LEVEL: "info"
+
+💥 Run renovate:
+  stage: dependency
+  image: $IMAGE_RENOVATE
+  before_script:
+    - !reference [.helper_gitlab-ci.sh]
+    - git clone git@gitlab.com:pl.rachuna-net/platform-policies.git
+    - |
+      export GITHUB_TOKEN=$(curl -s -k -H "X-Vault-Token: $VAULT_TOKEN" $VAULT_ADDR/v1/kv-gitlab/data/pl.rachuna-net/auth/github | jq -r .data.data.GITHUB_TOKEN)
+  script:
+    - renovate "${CI_PROJECT_PATH}/platform-policies"

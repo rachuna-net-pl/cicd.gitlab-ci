@@ -1,5 +1,5 @@
 ---
-🔬 Validate files (conftest):
+.conftest:base:
   stage: validate
   image: $IMAGE_CONFTEST
   variables:
@@ -35,5 +35,8 @@
   artifacts:
     reports:
       junit: conftest-junit.xml
+
+🔬 Validate files (conftest):
+  extends: [".conftest:base"]
   rules:
     - when: never

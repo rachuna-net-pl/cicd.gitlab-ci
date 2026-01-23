@@ -1,0 +1,4 @@
+---
+inputs:
+  AUTO_APPROVE:
+    default: ''

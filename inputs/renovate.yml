@@ -1,0 +1,4 @@
+---
+inputs:
+  TECH_PIPELINE_NAME:
+    default: ''

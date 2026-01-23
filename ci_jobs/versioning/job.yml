@@ -6,10 +6,10 @@
     - !reference [.helper_gitlab-ci.sh]
     - |
       echo ""
-      echo -e "\033[1;33m===>\033[0m ⚙️  Download .releaserc.js"
-      if [ ! -f "$CI_PROJECT_DIR/.releaserc" ]; then
-        VERSIONING_RELEASERC_URL="$CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/ci_jobs/versioning/.releaserc.js"
-        curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" ${VERSIONING_RELEASERC_URL} --output $CI_PROJECT_DIR/.releaserc.js;
+      echo -e "\033[1;33m===>\033[0m ⚙️  Download .releaserc.cjs"
+      if [ ! -f "$CI_PROJECT_DIR/.releaserc.cjs" ]; then
+        VERSIONING_RELEASERC_URL="$CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/ci_jobs/versioning/.releaserc.cjs"
+        curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" ${VERSIONING_RELEASERC_URL} --output $CI_PROJECT_DIR/.releaserc.cjs;
       fi
 
       echo -e "\033[1;33m===>\033[0m 🚧  Temporary create version"

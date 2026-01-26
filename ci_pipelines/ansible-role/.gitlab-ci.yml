@@ -1,0 +1,93 @@
+---
+variables:
+  ANSIBLE_IMAGE: registry.gitlab.com/pl.rachuna-net/artifacts/containers/ansible:1.0.0
+  ANSIBLE_INVENTORY: "inventory/hosts.yml"
+
+# 🧪 molecule test:
+#   stage: unit-test
+#   extends: ['.molecule:unit-test:base']
+#   script:
+#     - molecule test
+#   rules:
+#     - when: never
+# ---
+# spec:
+#   inputs:
+#     docker_image:
+#       default: "registry.gitlab.com/pl.rachuna-net/containers/ansible:1.0.0"
+#       description: "The docker image to use for the job"
+#     ansible_inventory:
+#       default: "inventory/hosts.yml"
+#       description: "The ansible inventory file to use"
+#     ansible_vars:
+#       default: ""
+#       description: "The ansible variables to play the playbook"
+# ---
+# variables:
+#   CONTAINER_IMAGE_ANSIBLE: $[[ inputs.docker_image ]]
+#   ANSIBLE_HOST_KEY_CHECKING: false
+#   ANSIBLE_FORCE_COLOR: true
+#   ANSIBLE_INVENTORY: $[[ inputs.ansible_inventory ]]
+#   ANSIBLE_VARS: $[[ inputs.ansible_vars ]]
+
+
+# include:
+#   - local: /source/logo.yml
+#   - local: /source/input_variables_ansible.yml
+#   - local: /source/ansible_init.yml
+
+
+# .ansible:validate:base:
+#   image: $CONTAINER_IMAGE_ANSIBLE
+#   before_script:
+#     - git config --global --add safe.directory ${CI_PROJECT_DIR}
+#     - !reference [.logo]
+#     - !reference [.input-variables-ansible]
+#     - !reference [.ansible_init]
+
+# ---
+# spec:
+#   inputs:
+#     docker_image:
+#       default: "registry.gitlab.com/pl.rachuna-net/containers/ansible:1.0.0"
+#       description: "The docker image with molecule to use for the job"
+# ---
+# variables:
+#   CONTAINER_IMAGE_ANSIBLE: $[[ inputs.docker_image ]]
+#   TEST_SSH_PUB_KEY: $SSH_PUBLIC_KEY
+#   ANSIBLE_HOST_KEY_CHECKING: false
+#   ANSIBLE_FORCE_COLOR: true
+
+# include:
+#   - local: /source/input_variables_molecule.yml
+#   - local: /source/logo.yml
+
+# .molecule:unit-test:base:
+#   image: $CONTAINER_IMAGE_ANSIBLE
+#   before_script:
+#     - git config --global --add safe.directory ${CI_PROJECT_DIR}
+#     - !reference [.logo]
+#     - !reference [.input-variables-molecule]
+
+#   ---
+# include:
+#   - component: $CI_SERVER_FQDN/pl.rachuna-net/cicd/components/ansible/roles@fix/1
+
+# ✅ molecule validate:
+#   stage: validate
+#   rules:
+#     - if: $PROJECT_TYPE != "ansible-role"
+#       when: never
+#     - if: $CI_COMMIT_TAG
+#       when: never
+#     - when: on_success
+
+# 🧪 molecule test:
+#   stage: unit-test
+#   needs: ["✅ molecule validate"]
+#   rules:
+#     - if: $PROJECT_TYPE != "ansible-role"
+#       when: never
+#     - if: $CI_COMMIT_TAG
+#       when: never
+#     - when: on_success

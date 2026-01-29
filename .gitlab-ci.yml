@@ -1,9 +1,6 @@
----
-spec:
-  inputs:
-    TECH_PIPELINE_NAME:
-      default: ''
-
+# spec:
+#   include:
+#     - local: inputs/${PROJECT_TYPE}.yml
 ---
 default:
   tags:

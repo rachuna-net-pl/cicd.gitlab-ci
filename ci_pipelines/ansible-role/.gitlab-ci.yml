@@ -1,0 +1,16 @@
+---
+variables:
+  DOCS_MD_FILE_PATH: ci_pipelines/ansible-role/README.md
+
+🧪 ansible-lint:
+  image: $IMAGE_ANSIBLE
+  stage: validate
+  before_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - ansible-lint --force-color .
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success

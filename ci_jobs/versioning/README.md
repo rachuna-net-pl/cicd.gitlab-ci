@@ -73,7 +73,7 @@ W projekcie wykorzystujemy **semantic-release** do w pełni zautomatyzowanego na
 
 ---
 
-### **4. Konfiguracja (.releaserc)**
+### **4. Konfiguracja (.releaserc.cjs)**
 
 ```json
 {

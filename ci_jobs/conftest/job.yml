@@ -7,13 +7,15 @@
     PLATFORM_POLICIES_PATH: conftest/policies
     DOCS_MD_FILE_PATH: ci_jobs/conftest/README.md
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - |
-      echo -e "\033[1;33m===>\033[0m ⚙️  Download policies"
+      h2 "⚙️  Download policies"
       git clone -b $REPOSITORY_PLATFORM_POLICIES_BRANCH --single-branch $REPOSITORY_PLATFORM_POLICIES .policies
   script:
     - |
       if [ ! -f .policies/$PLATFORM_POLICIES_PATH/$PLATFORM_POLICIES_NAMESPACE ]; then
+        h1 "🚀 conftest"
         conftest test $PLATFORM_POLICIES_FILES \
           --policy .policies/$PLATFORM_POLICIES_PATH \
           --namespace $PLATFORM_POLICIES_NAMESPACE \

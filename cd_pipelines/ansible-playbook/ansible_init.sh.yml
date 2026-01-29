@@ -1,0 +1,8 @@
+---
+.ansible_init.sh:
+  - |
+      export ANSIBLE_INVENTORY="inventory/hosts.yml"
+      export ANSIBLE_HOST_KEY_CHECKING=false
+      export ANSIBLE_FORCE_COLOR=true
+      export ANSIBLE_USER="techuser"
+      ansible-galaxy role install -f -r requirements.yml -p playbooks/roles

@@ -9,6 +9,7 @@ include:
   image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
   script:
     - tofu fmt -recursive -check
@@ -21,6 +22,7 @@ include:
   image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - !reference [.tofu-init.sh.yml]
   script:
@@ -34,6 +36,7 @@ include:
   image: $IMAGE_OPENTOFU
   stage: validate
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - !reference [.tofu-init.sh.yml]
   script:
@@ -47,6 +50,7 @@ include:
   image: $IMAGE_OPENTOFU
   stage: unit-test
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - !reference [.tofu-init.sh.yml]
   script:
@@ -62,6 +66,7 @@ include:
   needs:
     - job: 📍 Publish Version
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - !reference [.tofu-init.sh.yml]
   script:

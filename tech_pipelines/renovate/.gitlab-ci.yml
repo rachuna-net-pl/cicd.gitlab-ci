@@ -14,6 +14,7 @@ variables:
   stage: dependency
   image: $IMAGE_RENOVATE
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - git clone git@gitlab.com:pl.rachuna-net/platform-policies.git
     - |

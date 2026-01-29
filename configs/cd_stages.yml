@@ -1,0 +1,10 @@
+---
+stages:
+    ### Standard w ramach dyscypliny
+    - prepare           # przygotowanie środowiska, instalacja zależności, inicjalizacja.
+    - dependency        # pobieranie zależności (biliotek, funkcji, komponentów)
+    - validate          # weryfikacja poprawności konfiguracji, linting, planowanie zmian (Terraform, Ansible), pre-commit checks.
+    - build             # budowanie artefaktów (Packer, kontenery, kod źródłowy).
+    - deploy            # wdrażanie aplikacji, infrastruktury, konfiguracji.
+    - integration-test  # testy integracyjne, e2e, testy akceptacyjne.
+    - cleanup           # usuwanie tymczasowych zasobów, sprzątanie środowiska.

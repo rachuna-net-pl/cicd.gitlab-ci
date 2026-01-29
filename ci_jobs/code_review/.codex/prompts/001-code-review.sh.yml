@@ -74,6 +74,11 @@
 
         Plik wsadowy do zakładania wątków na otwartym MERGE REQUEST:
 
+        Szczególnie zwróć uwagę na:
+            * Zwróć uwagę na position.new_path - ścieżka do pliku
+            * Zwróć uwagę na position.old_path - ścieżka do pliku
+            * Zwróć uwagę na position.new_line - numer linii
+
         Przykładowa struktura pliku
         ```json
         [
@@ -85,9 +90,10 @@
               "base_sha": "$CI_COMMIT_SHA",
               "start_sha": "$CI_COMMIT_SHA",
               "head_sha": "$CI_COMMIT_SHA",
-              "old_path": "path/to/file.go",
-              "new_path": "path/to/file.go",
-              "new_line": 123
+              "position_type": "text",
+              "old_path": "file/path.ext",
+              "new_path": "file/path.ext",
+              "new_line": LINE
             }
           },
           {

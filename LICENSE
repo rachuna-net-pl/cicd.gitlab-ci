@@ -1,9 +1,46 @@
-# LICENCJA
+MIT License
 
-Copyright 2024 Maciej Rachuna rachuna-net.pl
+Copyright (c) 2026 Maciej Rachuna
 
-Niniejsza licencja przyznaje użytkownikom prawo do bezpłatnego korzystania z oprogramowania wyłącznie do celów prywatnych, domowych lub edukacyjnych. Użycie oprogramowania do celów komercyjnych, w tym w projektach nastawionych na zysk, działalności gospodarczej lub organizacjach non-profit generujących dochód, jest surowo zabronione.
+## ENG
 
-Modyfikacja oraz redystrybucja oprogramowania są zabronione bez pisemnej zgody autora.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Oprogramowanie jest dostarczane „takie, jakie jest”, bez jakichkolwiek gwarancji. Autor nie ponosi odpowiedzialności za jakiekolwiek szkody wynikające z użytkowania oprogramowania.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## PL
+
+Niniejszym udziela się bezpłatnie każdej osobie, która uzyskała kopię tego
+oprogramowania i powiązanych plików dokumentacji (dalej zwanych
+"Oprogramowaniem"), prawa do korzystania z Oprogramowania bez ograniczeń,
+obejmującego w szczególności prawa do używania, kopiowania, modyfikowania,
+łączenia, publikowania, rozpowszechniania, sublicencjonowania i/lub sprzedaży
+kopii Oprogramowania, jak również do zezwalania osobom, którym Oprogramowanie
+zostało dostarczone, na takie działania, z zastrzeżeniem następujących
+warunków:
+
+Powyższa informacja o prawach autorskich oraz niniejsze zezwolenie muszą być
+zawarte we wszystkich kopiach lub istotnych częściach Oprogramowania.
+
+OPROGRAMOWANIE JEST DOSTARCZANE "TAK JAK JEST", BEZ JAKIEJKOLWIEK GWARANCJI,
+WYRAŹNEJ LUB DOROZUMIANEJ, W TYM MIĘDZY INNYMI GWARANCJI PRZYDATNOŚCI
+HANDLOWEJ, PRZYDATNOŚCI DO OKREŚLONEGO CELU I NIENARUSZANIA PRAW. W ŻADNYM
+WYPADKU AUTORZY LUB POSIADACZE PRAW AUTORSKICH NIE PONOSZĄ ODPOWIEDZIALNOŚCI
+ZA JAKIEKOLWIEK ROSZCZENIA, SZKODY LUB INNE ZOBOWIĄZANIA, CZY TO WYNIKAJĄCE Z
+UMOWY, CZYNU NIEDOZWOLONEGO CZY W JAKIKOLWIEK INNY SPOSÓB, POWSTAŁE W
+ZWIĄZKU Z OPROGRAMOWANIEM LUB UŻYWANIEM OPROGRAMOWANIA LUB INNYMI
+DZIAŁANIAMI W ZAKRESIE OPROGRAMOWANIA.

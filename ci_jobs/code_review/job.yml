@@ -42,7 +42,7 @@ include:
 
       h2 Generuje diff
       git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" 2> /dev/null
-      git diff "origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" > .codex/artifacts/mr-diff
+      git diff "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" "origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" > .codex/artifacts/mr-diff
 
       if [ ! -s .codex/artifacts/mr-diff ]; then
         echo "Brak zmian w MR"
@@ -97,9 +97,13 @@ include:
           position=$(echo "$item" | jq -c '.position // empty')
 
           if [ -n "$position" ]; then
-            payload=$(jq -n --arg body "$body" --argjson position "$position" '{body: $body, position: $position}')
+            payload=$(jq -n --arg body "$body" --arg id "$CI_PROJECT_ID"  --arg merge_request_iid "$CI_MERGE_REQUEST_IID" --argjson position "$position" \
+              '{body: $body, id: $id, merge_request_iid: $merge_request_iid, position: $position}'
+            )
           else
-            payload=$(jq -n --arg body "$body" '{body: $body}')
+            payload=$(jq -n --arg body "$body" --arg id "$CI_PROJECT_ID"  --arg merge_request_iid "$CI_MERGE_REQUEST_IID" \
+              '{body: $body, id: $id, merge_request_iid: $merge_request_iid}'
+            )
           fi
 
           HTTP_CODE=$(curl -sS -o /tmp/ai_discussion_response.json -w "%{http_code}" \

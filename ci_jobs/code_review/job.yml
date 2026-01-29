@@ -1,28 +1,26 @@
 ---
 include:
-  - local: "ci_jobs/code_review/.codex/manifests/001-manifest.sh.yml"
-  - local: "ci_jobs/code_review/.codex/profiles/001-reviewer.sh.yml"
   - local: "ci_jobs/code_review/.codex/prompts/001-code-review.sh.yml"
 
 🕵 AI Code Review:
   stage: release
   image: $IMAGE_CODEX
   variables:
-    CODEX_MODEL: "gpt-5"
+    DOCS_MD_FILE_PATH: "ci_jobs/code_review/README.md"
     AI_REVIEWER_USERNAME: tech.mrachuna
-    AI_REVIEW_MAX_DIFF_CHARS: "120000"
-    AI_REVIEW_MAX_NOTE_CHARS: "20000"
+    CODEX_MODEL: "gpt-5-codex"
+    CODEX_LOG: ".codex/codex-exec.log"
+    REVIEW_OUTPUT: ".codex/artifacts/review-output.json"
   before_script:
+    - !reference [.helper_header_cli.sh]
     - !reference [.helper_gitlab-ci.sh]
     - |
       echo ""
-      echo -e "\033[1;33m===>\033[0m ⚙️  Configure Code Reviewer"
-      mkdir -p $HOME/.codex .codex/prompts .codex/docs
+      h1 "⚙️  Configure Code Reviewer"
+      mkdir -p $HOME/.codex .codex/prompts .codex/artifacts
       VAULT_SECRETS=$(curl -sS -H "X-Vault-Token: $VAULT_TOKEN" "$VAULT_ADDR/v1/kv-gitlab/data/pl.rachuna-net/auth/codex")
       echo $VAULT_SECRETS | jq -r '.data.data.AUTH_CONFIG' > $HOME/.codex/auth.json
       export GITLAB_TOKEN=$(echo $VAULT_SECRETS | jq -r '.data.data.GITLAB_TOKEN')
-    - !reference [.001-manifest.sh]
-    - !reference [.001-reviewer.sh]
     - !reference [.001-code-review.sh]
   script:
     - |
@@ -35,117 +33,100 @@ include:
         exit 0
       fi
 
-      echo -e "\033[1;33m===>\033[0m 🚀 Code Review"
-
       if [ -z "$CI_MERGE_REQUEST_IID" ]; then
         echo "⛔ Brak CI_MERGE_REQUEST_IID – nie jesteśmy w pipeline MR. Kończę."
         exit 0
       fi
 
-      echo -e "\033[1;34m--> Pobieram diff z MR #$CI_MERGE_REQUEST_IID\033[0m"
-      CHANGES_JSON=$(curl -sS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/changes")
-      echo "$CHANGES_JSON" | jq -e '.changes' >/dev/null 2>&1 || {
-        echo "⛔ Nie udało się sparsować odpowiedzi z GitLaba (brak .changes)."
-        echo "$CHANGES_JSON"
-        exit 1
-      }
+      h1 "🚀 Code Review"
 
-      DIFF_MD_PATH="$CI_PROJECT_DIR/.codex/docs/diff.md"
-      : > "$DIFF_MD_PATH"
+      h2 Generuje diff
+      git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" 2> /dev/null
+      git diff "origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" > .codex/artifacts/mr-diff
 
-      echo "$CHANGES_JSON" | jq -r '
-        .changes[] |
-        select(.diff != null and (.diff | length > 0)) |
-        "### \(.new_path // .old_path)\n```diff\n\(.diff)\n```\n"
-      ' >> "$DIFF_MD_PATH"
+      if [ ! -s .codex/artifacts/mr-diff ]; then
+        echo "Brak zmian w MR"
+        exit 0
+      fi
 
-      if [ ! -s "$DIFF_MD_PATH" ]; then
-        echo "Brak zmian w MR – wrzucam krótki komentarz."
-        REVIEW_TEXT="Brak zmian do przejrzenia (pusty diff)."
-      else
-        MAX_DIFF=${AI_REVIEW_MAX_DIFF_CHARS:-120000}
-        if [ "$(wc -c < "$DIFF_MD_PATH")" -gt "$MAX_DIFF" ]; then
-          echo -e "\n> (Diff ucięty przez limit ${MAX_DIFF} znaków – pełny diff jest w MR)\n" >> "$DIFF_MD_PATH"
-          TMP_TRUNC="$CI_PROJECT_DIR/.codex/docs/diff-trunc.md"
-          head -c "$MAX_DIFF" "$DIFF_MD_PATH" > "$TMP_TRUNC" && mv "$TMP_TRUNC" "$DIFF_MD_PATH"
-        fi
-
-        REVIEW_INPUT="$CI_PROJECT_DIR/.codex/docs/code-review-input.md"
-        : > "$REVIEW_INPUT"
-
-        {
-          echo "# Manifest"
-          cat "$CI_PROJECT_DIR/.codex/manifests/"*
-          echo ""
-
-          echo "# Reviewer profile"
-          cat "$CI_PROJECT_DIR/.codex/profiles/"*
-          echo ""
-
-          echo "# Code review task"
-          cat "$CI_PROJECT_DIR/.codex/prompts/"*
-          echo ""
-
-          echo "# Git diff to review"
-          cat "$DIFF_MD_PATH"
-        } >> "$REVIEW_INPUT"
-
-        REVIEW_OUTPUT="$CI_PROJECT_DIR/.codex/docs/code-review-output.md"
-        : > "$REVIEW_OUTPUT"
-
-        echo -e "\033[1;34m--> Uruchamiam codex exec (model: ${CODEX_MODEL})\033[0m"
-
-        CODEX_LOG="$CI_PROJECT_DIR/.codex/docs/codex-exec.log"
-        codex exec \
+      h2 Uruchamiam codex
+      {
+        cat .codex/prompts/001-code-review.md
+        echo
+        echo "## MR_DIFF_START"
+        cat .codex/artifacts/mr-diff
+        echo "## MR_DIFF_END"
+      } | codex exec \
           --model "${CODEX_MODEL}" \
-          --sandbox read-only \
+          --sandbox danger-full-access \
           --cd "$CI_PROJECT_DIR" \
-          --output-last-message "$REVIEW_OUTPUT" \
-          - < "$REVIEW_INPUT" 2> "$CODEX_LOG"
+          - \
+          >> "$CODEX_LOG" 2>&1 || EXIT_CODE=$?
 
-        if [ ! -s "$REVIEW_OUTPUT" ]; then
-          echo "Codex nie zwrócił żadnej treści – wstawiam fallback."
-          REVIEW_TEXT="Nie udało się uzyskać odpowiedzi od AI Developer. Sprawdź logi joba."
-        else
-          REVIEW_TEXT="$(cat "$REVIEW_OUTPUT")"
-          SHA="${CI_COMMIT_SHA:-unknown}"
+      ls -l .codex/artifacts
 
-          BODY="${REVIEW_TEXT}"
+      if [ ! -f .codex/artifacts/code-review.md ]; then
+        echo "Codex nie zwrócił żadnej treści – wstawiam fallback."
+        mr_comment "Nie udało się uzyskać odpowiedzi od AI Developer. Sprawdź logi joba."
+        cat $CODEX_LOG
+        exit 0
+      fi
 
-          MAX_NOTE=${AI_REVIEW_MAX_NOTE_CHARS:-20000}
-          BODY_TRUNC=$(printf "%b" "$BODY" | head -c "$MAX_NOTE")
+      h2 "Publikuję komentarz AI Developer do MR"
+      HTTP_CODE=$(curl -sS -o /tmp/ai_note_response.json -w "%{http_code}" \
+        -X POST \
+        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        --data-urlencode "body=$(cat .codex/artifacts/code-review.md)" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
+      )
 
-          if [ "${#BODY}" -gt "$MAX_NOTE" ]; then
-            BODY_TRUNC="${BODY_TRUNC}
+      echo "HTTP_CODE: ${HTTP_CODE}"
 
-          > (Komentarz ucięty przez limit ${MAX_NOTE} znaków – pełne review dostępne w artefakcie joba.)"
+      if [ "$HTTP_CODE" -ge 400 ]; then
+        echo "❌ Błąd podczas publikacji komentarza:"
+        cat /tmp/ai_note_response.json || true
+        exit 1
+      else
+        echo "✅ Komentarz AI Developer został dodany do MR"
+      fi
+
+      h2 "Przygotowuję wątki (discussions) z discussion.json"
+      if [ -f .codex/artifacts/discussion.json ]; then
+        jq -c '.[]' .codex/artifacts/discussion.json | while read -r item; do
+          body=$(echo "$item" | jq -r '.body')
+          position=$(echo "$item" | jq -c '.position // empty')
+
+          if [ -n "$position" ]; then
+            payload=$(jq -n --arg body "$body" --argjson position "$position" '{body: $body, position: $position}')
+          else
+            payload=$(jq -n --arg body "$body" '{body: $body}')
           fi
 
-          NOTE_URL="$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
-
-          echo -e "\033[1;34m--> Publikuję komentarz AI Developer do MR\033[0m"
-
-          HTTP_CODE=$(curl -sS -o /tmp/ai_note_response.json -w "%{http_code}" \
+          HTTP_CODE=$(curl -sS -o /tmp/ai_discussion_response.json -w "%{http_code}" \
             -X POST \
             --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-            --data-urlencode "body=${BODY_TRUNC}" \
-            "$NOTE_URL")
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/discussions"
+          )
 
           echo "HTTP_CODE: ${HTTP_CODE}"
 
           if [ "$HTTP_CODE" -ge 400 ]; then
-            echo "❌ Błąd podczas publikacji komentarza:"
-            cat /tmp/ai_note_response.json || true
+            echo "❌ Błąd podczas publikacji wątku:"
+            cat /tmp/ai_discussion_response.json || true
             exit 1
           else
-            echo "✅ Komentarz AI Developer został dodany do MR"
+            echo "✅ Wątek został dodany do MR"
           fi
-        fi
+        done
+      else
+        echo "Brak .codex/artifacts/discussion.json – pomijam tworzenie wątków."
       fi
   artifacts:
     when: always
     paths:
-      - .codex/docs/
+      - .codex
     expire_in: "1 day"
   after_script:
     - !reference [.helper_readme.sh]

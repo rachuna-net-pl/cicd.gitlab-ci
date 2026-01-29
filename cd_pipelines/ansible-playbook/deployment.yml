@@ -1,0 +1,34 @@
+---
+default:
+  tags:
+    - gitlab-rnp
+
+include:
+  - local: "configs/cd_stages.yml"
+  - local: "configs/cd_variables.yml"
+
+  # helpers
+  - local: "scripts/helper_gitlab-ci.yml"
+  - local: "scripts/helper_readme.yml"
+  - local: "cd_pipelines/ansible-playbook/ansible_init.sh.yml"
+
+.ansible-playbook:base:
+  image: $IMAGE_ANSIBLE
+  stage: deploy
+  variables:
+    DOCS_MD_FILE_PATH: cd_pipelines/ansible-playbook/README.md
+    ANSIBLE_INVENTORY: inventory/hosts.yml
+  before_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.ansible_init.sh]
+  script:
+    - |
+      h1 💾 Run Playbook: playbooks/install.yml"
+      ansible-playbook -i $ANSIBLE_INVENTORY playbooks/install.yml --extra-vars "$ANSIBLE_VARS"  --limit $ENVIRON
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: manual

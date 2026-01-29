@@ -1,0 +1,111 @@
+---
+variables:
+  DOCS_MD_FILE_PATH: ci_pipelines/ansible-playbook/README.md
+  ANSIBLE_INVENTORY: inventory/hosts.yml
+
+include:
+  - local: "ci_pipelines/ansible-playbook/ansible_init.sh.yml"
+
+🕵 Prepare for dynamic deployment:
+  stage: prepare
+  image: $IMAGE_PYTHON
+  before_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - |
+      curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "$CI_API_V4_URL/projects/${CI_PROJECT_ID}/environments" | jq -r '.[].name' > .ci/envs.txt
+      cat > .ci/deployment.yml <<EOF
+      ---
+      include:
+        - project: $GITLAB_CI_REPOSITORY_PATH
+          file: cd_pipelines/ansible-playbook/deployment.yml
+          ref: $GITLAB_CI_REPOSITORY_BRANCH
+      EOF
+
+      while read -r ENV_NAME; do
+        export PREPARE_JOB_NAME="prepare:${ENV_NAME}"
+        export DEPLOY_JOB_NAME="deploy:${ENV_NAME}"
+        export ENVIRON=${ENV_NAME}
+
+        cat >> .ci/deployment.yml <<EOF
+      💥 ansible playbook:$ENV_NAME:
+        stage: deploy
+        when: manual
+        variables:
+          ENVIRON: $ENVIRON
+        environment:
+          name: $ENV_NAME
+        extends: ['.ansible-playbook:base']
+        rules:
+          - if: '\$DEPLOY_ON == "$ENVIRON"'
+            when: on_success
+          - when: manual
+      EOF
+
+      done < .ci/envs.txt
+      cat .ci/deployment.yml
+  after_script:
+    - !reference [.helper_readme.sh]
+  artifacts:
+    when: on_success
+    paths:
+      - .ci/deployment.yml
+    expire_in: "1 day"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - when: on_success
+
+🧪 ansible-lint:
+  image: $IMAGE_ANSIBLE
+  stage: validate
+  before_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_gitlab-ci.sh]
+  script:
+    - ansible-lint --force-color .
+  after_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+✅ ansible-playbook check:
+  image: $IMAGE_ANSIBLE
+  stage: validate
+  before_script:
+    - !reference [.helper_header_cli.sh]
+    - !reference [.helper_gitlab-ci.sh]
+    - !reference [.ansible_init.sh]
+  script:
+    - |
+      for file in playbooks/*.yml; do
+        h1 💾 Run Playbook: $file"
+        ansible-playbook -i $ANSIBLE_INVENTORY $file --check --extra-vars "$ANSIBLE_VARS"
+      done
+  after_script:
+    - !reference [.helper_readme.sh]
+  rules:
+    - when: on_success
+
+💥 dynamic deployment:
+  stage: deploy
+  trigger:
+    include:
+      - artifact: .ci/deployment.yml
+        job: 🕵 Prepare for dynamic deployment
+    strategy: depend
+  variables:
+    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
+    DEPLOY_ON: $DEPLOY_ON
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - when: on_success

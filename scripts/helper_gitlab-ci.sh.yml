@@ -9,12 +9,11 @@
     export GITLAB_CI_REPOSITORY_BRANCH="${CONFIG#*:}"
 
     curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" $CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/docs/logo
-    echo -e "\033[1;33m===>\033[0m 💎 GITLAB-CI VERSION: $GITLAB_CI_REPOSITORY_BRANCH"
+    h1 "💎 GITLAB-CI VERSION: $GITLAB_CI_REPOSITORY_BRANCH"
 
     if command -v ssh-keygen >/dev/null 2>&1; then
       if [[ "$GITLAB_SSH_KEY" == "" ]]; then
         export GITLAB_SSH_KEY=$(curl -s -k -H "X-Vault-Token: $VAULT_TOKEN" $VAULT_ADDR/v1/kv-gitlab/data/pl.rachuna-net/auth/gitlab | jq -r .data.data.GITLAB_SSH_KEY)
-        echo "🔑  Pobrano sekret z Vaulta"
       fi
 
       mkdir -p $HOME/.ssh
@@ -26,15 +25,16 @@
       ssh-keyscan gitlab.com 2>/dev/null >> $HOME/.ssh/known_hosts
       chmod 644 $HOME/.ssh/known_hosts
     fi
+    h2 "🔑  Skonfigurowano SSH"
 
     curl -ks https://vault.rachuna-net.pl/v1/pki-root/ca/pem -o /usr/local/share/ca-certificates/rachuna-net-root-ca.crt
     curl -ks https://vault.rachuna-net.pl/v1/pki-infrastructure/ca/pem -o /usr/local/share/ca-certificates/rachuna-net-infrastructure-ca.crt
     curl -ks https://vault.rachuna-net.pl/v1/pki-apps/ca/pem -o /usr/local/share/ca-certificates/rachuna-net-apps-ca.crt
 
-    update-ca-certificates > /dev/null
+    update-ca-certificates 2> /dev/null > /dev/null
     export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
     export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-    echo "🔑  Pobrano certyfikatu CA"
+    h2 "🔑  Pobrano certyfikatu CA"
 
     # directory for pipeline files
     mkdir -p .ci
@@ -43,3 +43,18 @@
     git config --global user.email "tech.mrachuna@gmail.com"
     git config --global user.name "Technical Account"
     git remote set-url origin "git@gitlab.com:${CI_PROJECT_PATH}.git"
+
+    h2 "🔑  Skonfigurowano gitlab"
+
+    mr_comment() {
+      [ -n "${CI_MERGE_REQUEST_IID:-}" ] || return 0
+
+      text="$(printf '%s' "$*")"
+      json_string=$(printf '%s' "$text" | jq -Rs '{body: .}')
+
+      resp=$(curl -sS --fail -X POST \
+        -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+        -H "Content-Type: application/json" \
+        --data "$json_string" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes")
+    }

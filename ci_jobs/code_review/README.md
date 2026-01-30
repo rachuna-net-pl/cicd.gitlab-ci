@@ -3,13 +3,14 @@
 Job `🕵 AI Code Review` realizuje automatyczny przegląd kodu dla Merge Requestów z użyciem **Codex CLI**. Mechanizm:
 
 1. pobiera konfigurację autoryzacji i tokeny z Vault,
-2. pobiera diff MR z GitLab API,
-3. buduje „pakiet wejściowy” do review (manifest + profil reviewera + prompt + diff),
-4. uruchamia `codex exec` w trybie sandbox,
+2. pobiera dane MR z GitLab API (weryfikacja reviewera),
+3. buduje diff na bazie branchy MR (git diff),
+4. uruchamia `codex exec` z promptem i diffem,
 5. publikuje wynik jako komentarz w MR (GitLab Note),
-6. zapisuje artefakty (diff, input, output, logi) do debugowania.
+6. opcjonalnie publikuje wątki (discussions) na podstawie `discussion.json`,
+7. zapisuje artefakty (diff, output, logi) do debugowania.
 
-Job jest uruchamiany tylko w pipeline MR (`merge_request_event`) oraz tylko na self-hosted GitLab (blokada dla gitlab.com).
+Job jest uruchamiany tylko w pipeline MR (`merge_request_event`).
 
 ---
 ## Zakres i cel
@@ -24,31 +25,27 @@ Celem joba jest dostarczenie **spójnego, powtarzalnego i audytowalnego** code r
 ---
 ## Definicje include
 
-Job korzysta z trzech include’ów, które dostarczają treści i konfigurację dla review:
+Job korzysta z include’a dostarczającego prompt dla review:
 
 ```yaml
 include:
-  - local: "ci_jobs/code_review/.codex/manifests/001-manifest.sh.yml"
-  - local: "ci_jobs/code_review/.codex/profiles/001-reviewer.sh.yml"
   - local: "ci_jobs/code_review/.codex/prompts/001-code-review.sh.yml"
 ```
 
-### Co zapewniają include’y
+### Co zapewnia include
 
 | Plik                     | Rola                                                                      |
 | ------------------------ | ------------------------------------------------------------------------- |
-| `001-manifest.sh.yml`    | „Manifest” – zasady projektu, standardy, konwencje, priorytety review.    |
-| `001-reviewer.sh.yml`    | „Profil reviewera” – perspektywa, sposób oceny, kryteria, styl feedbacku. |
 | `001-code-review.sh.yml` | Prompt zadania – format odpowiedzi i oczekiwania co do outputu.           |
 
-W praktyce te referencje są dołączane do `.codex/` w trakcie `before_script` i następnie sklejane do `code-review-input.md`.
+W praktyce ta referencja jest dołączana do `.codex/` w trakcie `before_script` i zapisywana jako `.codex/prompts/001-code-review.md`.
 
 ---
 ## Obraz i wymagania runtime
 
 Job działa na obrazie:
 
-* `registry.rachuna-net.pl/pl.rachuna-net/containers/codex:1.1.0`
+* `$IMAGE_CODEX`
 
 Obraz powinien zawierać:
 
@@ -63,8 +60,9 @@ Obraz powinien zawierać:
 | Zmienna                    | Domyślna wartość | Znaczenie                                                      |
 | -------------------------- | ---------------: | -------------------------------------------------------------- |
 | `CODEX_MODEL`              |    `gpt-5-codex` | Model używany przez `codex exec`.                              |
-| `AI_REVIEW_MAX_DIFF_CHARS` |         `120000` | Maksymalny rozmiar diff przekazywany do AI (w znakach).        |
-| `AI_REVIEW_MAX_NOTE_CHARS` |          `20000` | Maksymalny rozmiar komentarza publikowanego do MR (w znakach). |
+| `AI_REVIEWER_USERNAME`     | `tech.mrachuna`  | Wymagany reviewer w MR, aby uruchomić AI review.               |
+| `CODEX_LOG`                | `.codex/codex-exec.log` | Log z wykonania Codex CLI.                               |
+| `REVIEW_OUTPUT`            | `.codex/artifacts/review-output.json` | Zmienna deklarowana w jobie (nieużywana w skrypcie). |
 
 ### Zmienne środowiskowe i sekrety
 
@@ -83,9 +81,10 @@ Job wymaga, aby w CI były dostępne:
 
 ### 1) Helper CI
 
-Job używa wspólnego helpera:
+Job używa wspólnych helperów:
 
 ```yaml
+- !reference [.helper_header_cli.sh]
 - !reference [.helper_gitlab-ci.sh]
 ```
 
@@ -109,17 +108,15 @@ export GITLAB_TOKEN=$(echo $VAULT_SECRETS | jq -r '.data.data.GITLAB_TOKEN')
 * autoryzacji Codex (auth.json),
 * wywołań GitLab API (GITLAB_TOKEN).
 
-### 3) Zapis treści manifest/profile/prompt
+### 3) Zapis treści promptu
 
 W `before_script` wykonywane są referencje:
 
 ```yaml
-- !reference [.001-manifest.sh]
-- !reference [.001-reviewer.sh]
 - !reference [.001-code-review.sh]
 ```
 
-Wynikiem jest przygotowana struktura `.codex/` (prompts/docs itd.) wykorzystywana później w `script`.
+Wynikiem jest przygotowana struktura `.codex/` z promptem używanym później w `script`.
 
 ---
 ## Logika działania (script)
@@ -133,10 +130,10 @@ MR_JSON=$(curl -sS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$CI_API_V4_URL/projects/$C
 REVIEWER_LOGINS=$(echo "$MR_JSON" | jq -r '.reviewers[].username')
 ```
 
-Następnie sprawdza, czy w MR jest reviewer `aideveloper`:
+Następnie sprawdza, czy w MR jest reviewer z `AI_REVIEWER_USERNAME` (domyślnie `tech.mrachuna`):
 
 ```bash
-if ! echo "$REVIEWER_LOGINS" | grep -Eq "aideveloper"; then
+if ! echo "$REVIEWER_LOGINS" | grep -Fq -- "$AI_REVIEWER_USERNAME"; then
   echo "⛔ Ten MR nie ma wymaganego reviewera – pomijam AI Code Review."
   exit 0
 fi
@@ -155,49 +152,56 @@ if [ -z "$CI_MERGE_REQUEST_IID" ]; then
 fi
 ```
 
-### 3) Pobranie diff i budowa `diff.md`
+### 3) Pobranie diff i budowa pliku diff
 
-Job pobiera zmiany MR:
+Job pobiera zmiany MR poprzez git diff branchy:
 
 ```bash
-CHANGES_JSON=$(curl -sS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-  "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/changes")
+git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" 2> /dev/null
+git diff "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" "origin/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" > .codex/artifacts/mr-diff
 ```
 
-Następnie generuje `.codex/docs/diff.md` w formacie markdown:
+Jeśli diff jest pusty, job kończy się bez błędu.
 
-* każdy plik jako sekcja `### path`
-* zawartość diff w blokach ` ```diff `
+### 4) Budowa wejścia do review
 
-Jeśli diff przekracza limit `AI_REVIEW_MAX_DIFF_CHARS`, jest ucinany.
+Job składa wejście w strumieniu STDIN zawierające:
 
-### 4) Budowa wejścia do review: `code-review-input.md`
-
-Job skleja jeden plik wejściowy zawierający:
-
-1. Manifest
-2. Profil reviewera
-3. Prompt zadania
-4. Diff MR
+1. Prompt zadania (`.codex/prompts/001-code-review.md`)
+2. Diff MR opakowany znacznikami `MR_DIFF_START` / `MR_DIFF_END`
 
 To zapewnia spójny kontekst i deterministykę promptu.
 
 ### 5) Uruchomienie Codex CLI
 
 ```bash
-codex exec \
-  --model "${CODEX_MODEL}" \
-  --sandbox read-only \
-  --cd "$CI_PROJECT_DIR" \
-  --output-last-message "$REVIEW_OUTPUT" \
-  - < "$REVIEW_INPUT" 2> "$CODEX_LOG"
+{
+  cat .codex/prompts/001-code-review.md
+  echo
+  echo "## MR_DIFF_START"
+  cat .codex/artifacts/mr-diff
+  echo "## MR_DIFF_END"
+} | codex exec \
+    --model "${CODEX_MODEL}" \
+    --sandbox danger-full-access \
+    --cd "$CI_PROJECT_DIR" \
+    - \
+    >> "$CODEX_LOG" 2>&1 || EXIT_CODE=$?
 ```
 
 Kluczowe parametry:
 
-* `--sandbox read-only` – AI nie może modyfikować repo w trakcie review.
-* `--output-last-message` – zapisuje finalną odpowiedź AI do pliku.
-* `2> "$CODEX_LOG"` – logi wykonania do artefaktów.
+* `--sandbox danger-full-access` – uruchomienie bez ograniczeń sandboxa.
+* `--cd "$CI_PROJECT_DIR"` – kontekst repozytorium dla Codex CLI.
+* `>> "$CODEX_LOG" 2>&1` – logi wykonania do artefaktów.
+
+Wynik review powinien pojawić się w `.codex/artifacts/code-review.md`. Jeśli plik nie powstanie, job publikuje fallbackowy komentarz i kończy się bez błędu.
+
+---
+## Publikacja komentarzy i wątków
+
+1. **Komentarz główny**: zawartość `.codex/artifacts/code-review.md` jest publikowana jako GitLab Note.
+2. **Wątki (discussions)**: jeśli istnieje `.codex/artifacts/discussion.json`, job publikuje wątki przez endpoint `discussions` (każdy element listy jako oddzielny request).
 
 ### 6) Publikacja komentarza do MR (GitLab Note)
 

@@ -2,7 +2,7 @@
 .tofu-init.sh.yml:
   - |
     echo ""
-    h1 🔗 Terraform init"
+    h1 "🔗 Terraform init"
 
     tofu version
 

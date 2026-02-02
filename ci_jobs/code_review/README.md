@@ -48,7 +48,7 @@ W praktyce te referencje są dołączane do `.codex/` w trakcie `before_script` 
 
 Job działa na obrazie:
 
-* `registry.rachuna-net.pl/pl.rachuna-net/containers/codex:1.1.0`
+* `registry.rachuna-net.pl/pl.rachuna-net/containers/codex:1.1.1`
 
 Obraz powinien zawierać:
 

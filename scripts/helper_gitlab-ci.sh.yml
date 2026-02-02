@@ -9,7 +9,7 @@
     export GITLAB_CI_REPOSITORY_BRANCH="${CONFIG#*:}"
 
     curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" $CI_SERVER_URL/$GITLAB_CI_REPOSITORY_PATH/-/raw/$GITLAB_CI_REPOSITORY_BRANCH/docs/logo
-    
+
     h1 "💎 GITLAB-CI VERSION: $GITLAB_CI_REPOSITORY_BRANCH"
 
     if command -v ssh-keygen >/dev/null 2>&1; then
@@ -26,7 +26,7 @@
       ssh-keyscan gitlab.com 2>/dev/null >> $HOME/.ssh/known_hosts
       chmod 644 $HOME/.ssh/known_hosts
     fi
-    
+
     h2 "🔑  Skonfigurowano SSH"
 
     curl -ks https://vault.rachuna-net.pl/v1/pki-root/ca/pem -o /usr/local/share/ca-certificates/rachuna-net-root-ca.crt
@@ -36,7 +36,7 @@
     update-ca-certificates 2> /dev/null > /dev/null
     export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
     export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-    
+
     h2 "🔑  Pobrano certyfikatu CA"
 
     # directory for pipeline files

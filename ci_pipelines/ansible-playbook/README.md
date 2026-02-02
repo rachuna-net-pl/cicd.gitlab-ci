@@ -9,7 +9,7 @@ Ten pipeline służy do uruchamiania **playbooka Ansible** w repozytoriach wdro�
 * Istnieje inventory: `inventory/hosts.yml` (domyślna ścieżka).
 * Jeżeli używasz ról z Galaxy, dostępny jest `requirements.yml`.
 * Obraz kontenera zawiera Ansible:
-  * `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.0.0`
+  * `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.1.1`
 * Dostępne są helpery:
   * `.helper_gitlab-ci.sh` (konfiguracja środowiska i dostępu do repo)
   * `.helper_readme.sh` (wskazanie dokumentacji po wykonaniu joba)
@@ -45,7 +45,7 @@ W nim znajduje się snippet `.ansible_init.sh`, który:
 
 | Zmienna             | Domyślna wartość                                                           | Opis                                                                 |
 | ------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `IMAGE_ANSIBLE`     | `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.0.0`          | Obraz kontenera z Ansible.                                          |
+| `IMAGE_ANSIBLE`     | `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.1.1`          | Obraz kontenera z Ansible.                                          |
 | `ANSIBLE_INVENTORY` | `inventory/hosts.yml`                                                      | Ścieżka do inventory (ustawiana w `.ansible_init.sh`).               |
 | `ANSIBLE_VARS`      | *(brak)*                                                                   | Dodatkowe `--extra-vars` przekazywane do playbooka.                  |
 | `ENVIRON`           | *(brak)*                                                                   | Limit hostów/środowiska przekazywany jako `--limit`.                 |

@@ -1,15 +1,16 @@
 # ▶️ Ansible Playbook
 
-Ten pipeline służy do uruchamiania **playbooka Ansible** w repozytoriach wdrożeniowych. W obecnej konfiguracji wykonuje `playbooks/install.yml` z przekazanymi zmiennymi i limitem hostów/środowiska.
+Ten pipeline służy do uruchamiania **playbooków Ansible** w repozytoriach wdrożeniowych. Zawiera walidację (lint + check), przygotowanie dynamicznego deploymentu oraz trigger do uruchomienia jobów per środowisko.
 
 ---
 ## Wymagania
 
-* Repozytorium zawiera playbook: `playbooks/install.yml`.
+* Repozytorium zawiera playbooki w `playbooks/*.yml`.
 * Istnieje inventory: `inventory/hosts.yml` (domyślna ścieżka).
 * Jeżeli używasz ról z Galaxy, dostępny jest `requirements.yml`.
-* Obraz kontenera zawiera Ansible:
-  * `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.1.1`
+* Obrazy kontenerów:
+  * `$IMAGE_ANSIBLE` (Ansible + ansible-lint)
+  * `$IMAGE_PYTHON` (generowanie dynamicznego pipeline)
 * Dostępne są helpery:
   * `.helper_gitlab-ci.sh` (konfiguracja środowiska i dostępu do repo)
   * `.helper_readme.sh` (wskazanie dokumentacji po wykonaniu joba)
@@ -23,7 +24,7 @@ Pipeline dołącza lokalny plik:
 
 ```yaml
 include:
-  - local: "pipelines/ansible-playbook/ansible_init.sh.yml"
+  - local: "ci_pipelines/ansible-playbook/ansible_init.sh.yml"
 ```
 
 W nim znajduje się snippet `.ansible_init.sh`, który:
@@ -45,29 +46,76 @@ W nim znajduje się snippet `.ansible_init.sh`, który:
 
 | Zmienna             | Domyślna wartość                                                           | Opis                                                                 |
 | ------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `IMAGE_ANSIBLE`     | `registry.rachuna-net.pl/pl.rachuna-net/containers/ansible:1.1.1`          | Obraz kontenera z Ansible.                                          |
-| `ANSIBLE_INVENTORY` | `inventory/hosts.yml`                                                      | Ścieżka do inventory (ustawiana w `.ansible_init.sh`).               |
+| `IMAGE_ANSIBLE`     | *(zdefiniowane w CI)*                                                      | Obraz kontenera z Ansible i ansible-lint.                            |
+| `IMAGE_PYTHON`      | *(zdefiniowane w CI)*                                                      | Obraz do generowania dynamicznego pipeline.                          |
+| `ANSIBLE_INVENTORY` | `inventory/hosts.yml`                                                      | Ścieżka do inventory.                                                |
 | `ANSIBLE_VARS`      | *(brak)*                                                                   | Dodatkowe `--extra-vars` przekazywane do playbooka.                  |
 | `ENVIRON`           | *(brak)*                                                                   | Limit hostów/środowiska przekazywany jako `--limit`.                 |
-| `DOCS_MD_FILE_PATH` | `pipelines/ansible-playbook/README.md`                                     | Ścieżka do dokumentacji używana przez `.helper_readme.sh`.           |
+| `DOCS_MD_FILE_PATH` | `ci_pipelines/ansible-playbook/README.md`                                  | Ścieżka do dokumentacji używana przez `.helper_readme.sh`.           |
+| `DEPLOY_ON`         | *(brak)*                                                                   | Jeśli ustawione, automatycznie uruchamia deploy tylko dla tego env.  |
+| `PARENT_PIPELINE_ID`| *(ustawiane w triggerze)*                                                  | ID pipeline nadrzędnego dla dynamicznego deploymentu.                |
 
 ---
 ## Joby: opis i zachowanie
 
-### 1) `🧾 ansible-playbook` (stage: `deploy`)
+### 1) `🕵 Prepare for dynamic deployment` (stage: `prepare`)
 
-**Cel:** wykonanie playbooka instalacyjnego.
+**Cel:** generuje dynamiczny pipeline dla środowisk zdefiniowanych w GitLab Environments.
+
+**Co robi:**
+
+* pobiera listę środowisk z GitLab API,
+* buduje `.ci/deployment.yml` z jobami `💥 ansible playbook:<env>`,
+* wystawia artefakt `.ci/deployment.yml`.
+
+**Kiedy się uruchamia:**
+
+* uruchamia się w normalnych pipeline (nie w `schedule`).
+
+---
+### 2) `🧪 ansible-lint` (stage: `validate`)
+
+**Cel:** uruchomienie `ansible-lint` dla całego repo.
 
 **Komenda:**
 
 ```bash
-ansible-playbook -i $ANSIBLE_INVENTORY playbooks/install.yml --extra-vars "$ANSIBLE_VARS" --limit $ENVIRON
+ansible-lint --force-color .
 ```
 
-**Kiedy się uruchamia:**
+---
+### 3) `✅ ansible-playbook check` (stage: `validate`)
 
-* automatycznie dla pipeline uruchomionego przez `schedule`,
-* manualnie w pozostałych przypadkach.
+**Cel:** uruchomienie wszystkich playbooków w trybie `--check`.
+
+**Komenda:**
+
+```bash
+for file in playbooks/*.yml; do
+  ansible-playbook -i $ANSIBLE_INVENTORY $file --check --extra-vars "$ANSIBLE_VARS"
+done
+```
+
+---
+### 4) `💥 dynamic deployment` (stage: `deploy`)
+
+**Cel:** triggeruje pipeline z artefaktu `.ci/deployment.yml`.
+
+**Zachowanie:**
+
+* uruchamia się tylko na `default branch`,
+* nie uruchamia się dla tagów ani pipeline `schedule`,
+* pomija jeśli są otwarte MR do branchy.
+
+---
+### 5) `💥 ansible playbook:<env>` (stage: `deploy`, w pipeline dynamicznym)
+
+**Cel:** uruchomienie playbooka dla konkretnego środowiska.
+
+**Ważne:**
+
+* joby są tworzone dynamicznie per środowisko z GitLab,
+* standardowo są `manual`, ale jeśli `DEPLOY_ON == <env>`, uruchamiają się automatycznie.
 
 ---
 ## Typowe problemy i diagnoza
@@ -91,4 +139,7 @@ ansible-playbook -i $ANSIBLE_INVENTORY playbooks/install.yml --extra-vars "$ANSI
 ## Referencja: definicje z pipeline
 
 * `.ansible_init.sh`: ustawienie środowiska + instalacja ról
-* `🧾 ansible-playbook`: wykonanie `playbooks/install.yml`
+* `🕵 Prepare for dynamic deployment`: generowanie `.ci/deployment.yml`
+* `🧪 ansible-lint`: lint repo
+* `✅ ansible-playbook check`: check dla `playbooks/*.yml`
+* `💥 dynamic deployment`: trigger dynamicznego deploymentu

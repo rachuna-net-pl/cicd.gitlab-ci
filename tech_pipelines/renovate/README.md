@@ -18,7 +18,7 @@ Konfiguracje Renovate są utrzymywane w repozytorium polityk:
 * W repozytorium istnieje `renovate.json` z konfiguracją.
 * Dostęp do obrazu:
 
-  * `registry.gitlab.com/pl.rachuna-net/artifacts/containers/renovate:1.0.0`
+  * `registry.gitlab.com/pl.rachuna-net/artifacts/containers/renovate:1.1.0`
 * Token do API GitLab z uprawnieniami do tworzenia MR i pushowania gałęzi.
 * Najlepiej uruchamiać pipeline jako **schedule** (np. codziennie w nocy).
 
@@ -27,7 +27,7 @@ Konfiguracje Renovate są utrzymywane w repozytorium polityk:
 
 | Zmienna | Domyślna wartość | Opis |
 | --- | --- | --- |
-| `IMAGE_RENOVATE` | `registry.gitlab.com/pl.rachuna-net/artifacts/containers/renovate:1.0.0` | Obraz z Renovate. |
+| `IMAGE_RENOVATE` | `registry.gitlab.com/pl.rachuna-net/artifacts/containers/renovate:1.1.0` | Obraz z Renovate. |
 | `RENOVATE_TOKEN` | brak | Token do API GitLab (PAT lub token bota). |
 | `RENOVATE_ENDPOINT` | brak | URL API GitLab (np. `https://gitlab.com/api/v4`). |
 | `RENOVATE_PLATFORM` | `gitlab` | Docelowa platforma SCM. |
